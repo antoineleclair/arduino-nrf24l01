@@ -1,5 +1,11 @@
+/**
+ *  From the specifications available in the download section of
+ *  http://www.nordicsemi.com/kor/Products/2.4GHz-RF/nRF24L01P
+ */
+
 #ifndef _NRF24L01_H
 #define _NRF24L01_H
+
 
 // SPI Commands
 
