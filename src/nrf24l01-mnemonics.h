@@ -65,12 +65,12 @@
 #define RF_DR       3
 #define RF_PWR      1
 
-#define STATUS      0x07
-#define RX_DR       6
-#define TX_DS       5
-#define MAX_RT      4
-#define RX_P_NO     1
-#define TX_FULL     0
+#define STATUS              0x07
+#define RX_DR               6
+#define TX_DS               5
+#define MAX_RT              4
+#define RX_P_NO             1
+#define STATUS_TX_FULL      0
 
 #define OBSERVE_TX  0x08
 #define PLOS_CNT    4
@@ -94,12 +94,12 @@
 #define RX_PW_P4    0x15
 #define RX_PW_P5    0x16
 
-#define FIFO_STATUS 0x17
-#define TX_REUSE    6
-#define TX_FULL     5
-#define TX_EMPTY    4
-#define RX_FULL     1
-#define RX_EMPTY    0
+#define FIFO_STATUS         0x17
+#define TX_REUSE            6
+#define FIFO_TX_FULL        5
+#define TX_EMPTY            4
+#define RX_FULL             1
+#define RX_EMPTY            0
 
 #define DYNPD       0x1C
 #define DPL_P5      5
