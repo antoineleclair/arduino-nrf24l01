@@ -1,11 +1,14 @@
-#ifndef _WIRELESS_H_
-#define _WIRELESS_H_
+#include "nrf24l01.h"
 
-class Wireless {
+#ifndef _NRF24L01_H
+#define _NRF24L01_H
+
+class nRF24L01 {
     
     public:
-        Wireless(int slaveSelectPin, int chipEnabledPin);
+        nRF24L01(int slaveSelectPin, int chipEnabledPin);
         void begin();
+        uint_8 sendCommand(uint_8 command, uint_8 *data, size_t dataLength);
     
     private:
         int slaveSelectPin;

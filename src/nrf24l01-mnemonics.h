@@ -3,8 +3,8 @@
  *  http://www.nordicsemi.com/kor/Products/2.4GHz-RF/nRF24L01P
  */
 
-#ifndef _NRF24L01_H
-#define _NRF24L01_H
+#ifndef _NRF24L01_MNEMONICS_H
+#define _NRF24L01_MNEMONICS_H
 
 
 // SPI Commands
