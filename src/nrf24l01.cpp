@@ -1,9 +1,11 @@
 #include "nrf24l01.h"
 #include <SPI.h>
 
-nRF24L01::nRF24L01(int slaveSelectPin, int chipEnabledPin) {
+nRF24L01::nRF24L01(int slaveSelectPin, int chipEnabledPin, int interruptPin) {
     this.slaveSelectPin = slaveSelectPin;
     this.chipEnabledPin = chipEnabledPin;
+    this.interruptPin = interruptPin;
+    transmitting = false;
 }
 
 void nRF24L01::begin() {
@@ -31,4 +33,12 @@ uint_8 nRF24L01::sendCommand(uint_8 command,
     digitalWrite(slaveSelectPin, HIGH);
     
     return status;
+}
+
+void nRF24L01::transmit(void *data, size_t length) {
+    
+}
+
+bool nRF24L01::isTransmitting() {
+    return trasmitting;
 }
