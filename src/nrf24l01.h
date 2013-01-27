@@ -9,9 +9,14 @@ class nRF24L01 {
     public:
         nRF24L01(int slaveSelectPin, int chipEnabledPin, int interruptPin);
         void begin();
-        uint8_t sendCommand(uint8_t command, void const *data, size_t length);
-        void transmit(void *data, size_t length);
         bool isTransmitting();
+        
+        uint8_t sendCommand(uint8_t command, void *data, size_t length);
+        
+        uint8_t writeRegister(uint8_t regAddress,
+            void *data, size_t length);
+        uint8_t readRegister(uint8_t regAddress,
+            void *data, size_t length);    
         
     private:
         int slaveSelectPin;

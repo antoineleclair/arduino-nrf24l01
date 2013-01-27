@@ -23,23 +23,29 @@ void nRF24L01::begin() {
 }
 
 uint8_t nRF24L01::sendCommand(uint8_t command,
-                             void const *data, size_t dataLength) {
+                              void *data, size_t length) {
     
     digitalWrite(slaveSelectPin, LOW);
     
     uint8_t status = SPI.transfer(command);
-    for (int i = 0; i < dataLength; i++) 
-        SPI.transfer(((uint8_t*)data)[i]);
+    for (unsigned int i = 0; i < length; i++) 
+        ((uint8_t*)data)[i] = SPI.transfer(((uint8_t*)data)[i]);
     
     digitalWrite(slaveSelectPin, HIGH);
     
     return status;
 }
 
-void nRF24L01::transmit(void *data, size_t length) {
-    
-}
-
 bool nRF24L01::isTransmitting() {
     return transmitting;
+}
+
+uint8_t nRF24L01::writeRegister(uint8_t regAddress,
+    void *data, size_t length) {
+    return sendCommand(W_REGISTER | regAddress, data, length);
+}
+
+uint8_t nRF24L01::readRegister(uint8_t regAddress,
+    void *data, size_t length) {
+    return sendCommand(R_REGISTER | regAddress, data, length);
 }
