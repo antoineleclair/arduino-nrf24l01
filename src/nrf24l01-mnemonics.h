@@ -69,7 +69,7 @@
 #define RX_DR               6
 #define TX_DS               5
 #define MAX_RT              4
-#define RX_P_NO             1
+#define RX_P_NO_MASK        0x0E
 #define STATUS_TX_FULL      0
 
 #define OBSERVE_TX  0x08
