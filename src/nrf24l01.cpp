@@ -77,12 +77,12 @@ uint8_t nRF24L01::getStatus() {
 }
 
 bool nRF24L01::dataReceived() {
-    updateStatus();
     return status & _BV(RX_DR);
 }
 
 void nRF24L01::listen(int pipe, void *address) {
     writeRegister(RX_ADDR_P0 + pipe, address, 5);
+    digitalWrite(chipEnabledPin, HIGH);
 }
 
 void nRF24L01::readReceivedData(nRF24L01Message *message) {
@@ -103,14 +103,24 @@ void nRF24L01::transmit(void *address, nRF24L01Message *msg) {
     sendCommand(TX_ADDR, address, 5);
     sendCommand(RX_ADDR_P0, address, 5);
     sendCommand(W_TX_PAYLOAD, &msg->data, msg->length);
+    uint8_t config;
+    readRegister(CONFIG, &config, 1);
+    config &= ~_BV(PRIM_RX);
+    writeRegister(CONFIG, &config, 1);    
+    digitalWrite(chipEnabledPin, HIGH);
 }
 
 int nRF24L01::transmitSuccess() {
+    digitalWrite(chipEnabledPin, LOW);
     int success;
-    if (status & TX_DS) success = 1;
-    else if (status & MAX_RT) success = -1;
+    if (status & _BV(TX_DS)) success = 1;
+    else if (status & _BV(MAX_RT)) success = -1;
     else success = 0;
-    clearTransmitInterrupts();    
+    clearTransmitInterrupts();
+    uint8_t config;
+    readRegister(CONFIG, &config, 1);
+    config |= _BV(PRIM_RX);
+    writeRegister(CONFIG, &config, 1);
     return success;
 }
 
