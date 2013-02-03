@@ -20,6 +20,10 @@ void nRF24L01::begin() {
 	SPI.setClockDivider(SPI_2XCLOCK_MASK);
     SPI.setBitOrder(MSBFIRST);
 
+    sendCommand(FLUSH_RX, NULL, 0);
+    sendCommand(FLUSH_TX, NULL, 0);
+    clearInterrupts();
+    
     uint8_t data;
     data = _BV(EN_CRC) | _BV(CRCO) | _BV(PWR_UP) | _BV(PRIM_RX);
     writeRegister(CONFIG, &data, 1);
@@ -77,24 +81,35 @@ uint8_t nRF24L01::getStatus() {
 }
 
 bool nRF24L01::dataReceived() {
+    digitalWrite(chipEnabledPin, LOW);    
     return status & _BV(RX_DR);
 }
 
 void nRF24L01::listen(int pipe, void *address) {
-    writeRegister(RX_ADDR_P0 + pipe, address, 5);
+    uint8_t addr[5];
+    for (int i = 0; i < 5; i++)
+        addr[i] = ((uint8_t*) address)[i];
+    writeRegister(RX_ADDR_P0 + pipe, addr, 5);
+    
+    uint8_t currentPipes;
+    readRegister(EN_RXADDR, &currentPipes, 1);
+    currentPipes |= _BV(pipe);
+    writeRegister(EN_RXADDR, &currentPipes, 1);
+
     digitalWrite(chipEnabledPin, HIGH);
 }
 
 void nRF24L01::readReceivedData(nRF24L01Message *message) {
-    clearReceiveInterrupt();
     int pipe = status & RX_P_NO_MASK;
-    
+    clearReceiveInterrupt();
+        
     if (pipe == RX_P_NO_MASK) { // pipes all empty
         message->length = 0;
         return;
     }    
+    readRegister(R_RX_PL_WID, &message->length, 1);
     
-    readRegister(RX_PW_P0 + pipe, &message->length, 1);
+    if (message->length == 0) return;
     sendCommand(R_RX_PAYLOAD, &message->data, message->length);
 }
 
@@ -135,7 +150,7 @@ void nRF24L01::clearTransmitInterrupts() {
 }
 
 void nRF24L01::clearReceiveInterrupt() {
-    uint8_t data = _BV(RX_DR);
+    uint8_t data = _BV(RX_DR) | status;    
     writeRegister(STATUS, &data, 1);
 }
 

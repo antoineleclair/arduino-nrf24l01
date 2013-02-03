@@ -7,7 +7,7 @@
 typedef struct {
     int pipeNumber;
     uint8_t data[32];
-    size_t length;
+    uint8_t length;
 } nRF24L01Message;
 
 class nRF24L01 {
