@@ -29,7 +29,9 @@ void loop() {
     if (millis() < next)
         return;
 
+    next = millis() + 1000;
     on = !on;
+
     nRF24L01Message msg;
 
     if (on) {
