@@ -33,12 +33,12 @@ void nRF24L01::begin() {
          | _BV(ENAA_P3) | _BV(ENAA_P4) | _BV(ENAA_P5);
     writeRegister(EN_AA, &data, 1);
     
-    // enable Dynamic Payload
+    // enable Dynamic Payload on al pipes
     data = _BV(DPL_P0) | _BV(DPL_P1) | _BV(DPL_P2)
          | _BV(DPL_P3) | _BV(DPL_P4) | _BV(DPL_P5);
     writeRegister(DYNPD, &data, 1);
     
-    // enable Dynamic Payload
+    // enable Dynamic Payload (global)
     data = _BV(EN_DPL);
     writeRegister(FEATURE, &data, 1); 
 }
