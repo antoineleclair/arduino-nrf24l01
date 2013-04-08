@@ -24,11 +24,13 @@ void loop() {
     if (interrupted) {
         interrupted = false;
         int success = rf.transmitSuccess();
+        if (success != 0)
+            rf.sendCommand(FLUSH_TX, NULL, 0);
     }
     
     if (millis() < next)
         return;
-
+    
     next = millis() + 1000;
     on = !on;
 

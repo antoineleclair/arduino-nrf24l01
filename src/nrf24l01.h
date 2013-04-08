@@ -44,6 +44,7 @@ class nRF24L01 {
         int chipEnabledPin;
         
         uint8_t status;
+        void copyAddress(uint8_t *source, uint8_t* destination);
 };
 
 #endif

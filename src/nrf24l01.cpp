@@ -41,6 +41,10 @@ void nRF24L01::begin() {
     // enable Dynamic Payload (global)
     data = _BV(EN_DPL);
     writeRegister(FEATURE, &data, 1); 
+    
+    // disable all rx addresses
+    data = 0;
+    writeRegister(EN_RXADDR, &data, 1);
 }
 
 uint8_t nRF24L01::sendCommand(uint8_t command,
@@ -81,14 +85,14 @@ uint8_t nRF24L01::getStatus() {
 }
 
 bool nRF24L01::dataReceived() {
-    digitalWrite(chipEnabledPin, LOW);    
+    digitalWrite(chipEnabledPin, LOW);
+    updateStatus();   
     return status & _BV(RX_DR);
 }
 
 void nRF24L01::listen(int pipe, void *address) {
     uint8_t addr[5];
-    for (int i = 0; i < 5; i++)
-        addr[i] = ((uint8_t*) address)[i];
+    copyAddress((uint8_t *)address, addr);
     writeRegister(RX_ADDR_P0 + pipe, addr, 5);
     
     uint8_t currentPipes;
@@ -102,7 +106,7 @@ void nRF24L01::listen(int pipe, void *address) {
 void nRF24L01::readReceivedData(nRF24L01Message *message) {
     int pipe = status & RX_P_NO_MASK;
     clearReceiveInterrupt();
-        
+    // TODO read only pipe that received data    
     if (pipe == RX_P_NO_MASK) { // pipes all empty
         message->length = 0;
         return;
@@ -115,8 +119,11 @@ void nRF24L01::readReceivedData(nRF24L01Message *message) {
 
 void nRF24L01::transmit(void *address, nRF24L01Message *msg) {
     clearTransmitInterrupts();
-    sendCommand(TX_ADDR, address, 5);
-    sendCommand(RX_ADDR_P0, address, 5);
+    uint8_t addr[5];
+    copyAddress((uint8_t *)address, addr);
+    writeRegister(TX_ADDR, addr, 5);
+    copyAddress((uint8_t *)address, addr);
+    writeRegister(RX_ADDR_P0, addr, 5);
     sendCommand(W_TX_PAYLOAD, &msg->data, msg->length);
     uint8_t config;
     readRegister(CONFIG, &config, 1);
@@ -127,10 +134,11 @@ void nRF24L01::transmit(void *address, nRF24L01Message *msg) {
 
 int nRF24L01::transmitSuccess() {
     digitalWrite(chipEnabledPin, LOW);
+    updateStatus();
     int success;
-    if (status & _BV(TX_DS)) success = 1;
+    if (status & _BV(TX_DS)) success = 0;
     else if (status & _BV(MAX_RT)) success = -1;
-    else success = 0;
+    else success = -2;
     clearTransmitInterrupts();
     uint8_t config;
     readRegister(CONFIG, &config, 1);
@@ -154,3 +162,7 @@ void nRF24L01::clearReceiveInterrupt() {
     writeRegister(STATUS, &data, 1);
 }
 
+void nRF24L01::copyAddress(uint8_t *source, uint8_t *destination) {
+    for (int i = 0; i < 5; i++)
+        destination[i] = source[i];
+}
