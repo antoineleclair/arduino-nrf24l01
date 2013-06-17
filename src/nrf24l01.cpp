@@ -11,10 +11,10 @@ nRF24L01::nRF24L01(int slaveSelectPin, int chipEnabledPin) {
 void nRF24L01::begin() {
     pinMode(slaveSelectPin, OUTPUT);
     pinMode(chipEnabledPin, OUTPUT);
-    
+
     digitalWrite(slaveSelectPin, HIGH);
     digitalWrite(chipEnabledPin, LOW);
-    
+
     SPI.begin();
 	SPI.setDataMode(SPI_MODE0);
 	SPI.setClockDivider(SPI_2XCLOCK_MASK);
@@ -23,25 +23,25 @@ void nRF24L01::begin() {
     sendCommand(FLUSH_RX, NULL, 0);
     sendCommand(FLUSH_TX, NULL, 0);
     clearInterrupts();
-    
+
     uint8_t data;
     data = _BV(EN_CRC) | _BV(CRCO) | _BV(PWR_UP) | _BV(PRIM_RX);
     writeRegister(CONFIG, &data, 1);
-    
+
     // enable Auto Acknowlegde on all pipes
     data = _BV(ENAA_P0) | _BV(ENAA_P1) | _BV(ENAA_P2)
          | _BV(ENAA_P3) | _BV(ENAA_P4) | _BV(ENAA_P5);
     writeRegister(EN_AA, &data, 1);
-    
+
     // enable Dynamic Payload on al pipes
     data = _BV(DPL_P0) | _BV(DPL_P1) | _BV(DPL_P2)
          | _BV(DPL_P3) | _BV(DPL_P4) | _BV(DPL_P5);
     writeRegister(DYNPD, &data, 1);
-    
+
     // enable Dynamic Payload (global)
     data = _BV(EN_DPL);
-    writeRegister(FEATURE, &data, 1); 
-    
+    writeRegister(FEATURE, &data, 1);
+
     // disable all rx addresses
     data = 0;
     writeRegister(EN_RXADDR, &data, 1);
@@ -49,15 +49,15 @@ void nRF24L01::begin() {
 
 uint8_t nRF24L01::sendCommand(uint8_t command,
                               void *data, size_t length) {
-    
+
     digitalWrite(slaveSelectPin, LOW);
-    
+
     status = SPI.transfer(command);
-    for (unsigned int i = 0; i < length; i++) 
+    for (unsigned int i = 0; i < length; i++)
         ((uint8_t*)data)[i] = SPI.transfer(((uint8_t*)data)[i]);
-    
+
     digitalWrite(slaveSelectPin, HIGH);
-    
+
     return status;
 }
 
@@ -86,7 +86,7 @@ uint8_t nRF24L01::getStatus() {
 
 bool nRF24L01::dataReceived() {
     digitalWrite(chipEnabledPin, LOW);
-    updateStatus();   
+    updateStatus();
     return status & _BV(RX_DR);
 }
 
@@ -94,7 +94,7 @@ void nRF24L01::listen(int pipe, void *address) {
     uint8_t addr[5];
     copyAddress((uint8_t *)address, addr);
     writeRegister(RX_ADDR_P0 + pipe, addr, 5);
-    
+
     uint8_t currentPipes;
     readRegister(EN_RXADDR, &currentPipes, 1);
     currentPipes |= _BV(pipe);
@@ -104,15 +104,15 @@ void nRF24L01::listen(int pipe, void *address) {
 }
 
 void nRF24L01::readReceivedData(nRF24L01Message *message) {
-    int pipe = status & RX_P_NO_MASK;
+    message->pipeNumber = (status & RX_P_NO_MASK) >> 1;
     clearReceiveInterrupt();
-    // TODO read only pipe that received data    
-    if (pipe == RX_P_NO_MASK) { // pipes all empty
+    if (message->pipeNumber == 7) { // 111 => all empty pipes
         message->length = 0;
         return;
-    }    
+    }
+
     readRegister(R_RX_PL_WID, &message->length, 1);
-    
+
     if (message->length == 0) return;
     sendCommand(R_RX_PAYLOAD, &message->data, message->length);
 }
@@ -128,7 +128,7 @@ void nRF24L01::transmit(void *address, nRF24L01Message *msg) {
     uint8_t config;
     readRegister(CONFIG, &config, 1);
     config &= ~_BV(PRIM_RX);
-    writeRegister(CONFIG, &config, 1);    
+    writeRegister(CONFIG, &config, 1);
     digitalWrite(chipEnabledPin, HIGH);
 }
 
@@ -158,7 +158,7 @@ void nRF24L01::clearTransmitInterrupts() {
 }
 
 void nRF24L01::clearReceiveInterrupt() {
-    uint8_t data = _BV(RX_DR) | status;    
+    uint8_t data = _BV(RX_DR) | status;
     writeRegister(STATUS, &data, 1);
 }
 

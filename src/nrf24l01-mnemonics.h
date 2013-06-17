@@ -62,7 +62,7 @@
 #define CONT_WAVE   7
 #define RF_DR_LOW   5
 #define PLL_LOCK    4
-#define RF_DR       3
+#define RF_DR_HIGH  3
 #define RF_PWR      1
 
 #define STATUS              0x07
