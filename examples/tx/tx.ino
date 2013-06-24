@@ -25,24 +25,21 @@ void loop() {
         interrupted = false;
         int success = rf.transmitSuccess();
         if (success != 0)
-            rf.sendCommand(FLUSH_TX, NULL, 0);
+            rf.flushTransmitMessage();
     }
-    
+
     if (millis() < next)
         return;
-    
+
     next = millis() + 1000;
     on = !on;
 
     nRF24L01Message msg;
 
-    if (on) {
-        memcpy(msg.data, "ON", 3);
-        msg.length = 3;
-    } else {
-        memcpy(msg.data, "OFF", 4);
-        msg.length = 4;
-    }
+    if (on) memcpy(msg.data, "ON", 3);
+    else memcpy(msg.data, "OFF", 4);
+    msg.length = strlen((char *)msg.data) + 1;
+
     rf.transmit(toAddress, &msg);
 }
 

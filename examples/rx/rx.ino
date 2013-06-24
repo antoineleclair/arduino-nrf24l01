@@ -10,7 +10,7 @@
 
 nRF24L01 rf = nRF24L01(SLAVE_SELECT_PIN, CHIP_ENABLE_PIN);
 
-bool interrupted = false;
+volatile bool interrupted = false;
 
 uint8_t address[5] = { 0x01, 0x01, 0x01, 0x01, 0x01 };
 
@@ -27,25 +27,22 @@ void loop() {
         return;
     interrupted = false;
 
-    if (!rf.dataReceived()) {
-        rf.listen(0, address);
-        return;
+    while (rf.dataReceived()) {
+        nRF24L01Message msg;
+        rf.readReceivedData(&msg);
+        processMessage((char *)msg.data);
     }
-
-    nRF24L01Message msg;
-    rf.readReceivedData(&msg);
-    if (msg.length == 0) {
-        rf.listen(0, address);
-        return;
-    }
-    if (strcmp((char *)msg.data, "ON") == 0)
-        digitalWrite(LED_PIN, HIGH);
-    else if (strcmp((char *)msg.data, "OFF") == 0)
-        digitalWrite(LED_PIN, LOW);
 
     rf.listen(0, address);
 }
 
 void rfInterrupt() {
     interrupted = true;
+}
+
+void processMessage(char *message) {
+    if (strcmp(message, "ON") == 0)
+        digitalWrite(LED_PIN, HIGH);
+    else if (strcmp(message, "OFF") == 0)
+        digitalWrite(LED_PIN, LOW);
 }
