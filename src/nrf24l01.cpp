@@ -47,9 +47,7 @@ void nRF24L01::begin() {
     writeRegister(EN_RXADDR, &data, 1);
 }
 
-uint8_t nRF24L01::sendCommand(uint8_t command,
-                              void *data, size_t length) {
-
+uint8_t nRF24L01::sendCommand(uint8_t command, void *data, size_t length) {
     digitalWrite(slaveSelectPin, LOW);
 
     status = SPI.transfer(command);
@@ -87,12 +85,12 @@ uint8_t nRF24L01::getStatus() {
 bool nRF24L01::dataReceived() {
     digitalWrite(chipEnabledPin, LOW);
     updateStatus();
-    return status & _BV(RX_DR);
+    return pipeNumberReceived() >= 0;
 }
 
-void nRF24L01::listen(int pipe, void *address) {
+void nRF24L01::listen(int pipe, uint8_t *address) {
     uint8_t addr[5];
-    copyAddress((uint8_t *)address, addr);
+    copyAddress(address, addr);
     writeRegister(RX_ADDR_P0 + pipe, addr, 5);
 
     uint8_t currentPipes;
@@ -103,18 +101,25 @@ void nRF24L01::listen(int pipe, void *address) {
     digitalWrite(chipEnabledPin, HIGH);
 }
 
-void nRF24L01::readReceivedData(nRF24L01Message *message) {
-    message->pipeNumber = (status & RX_P_NO_MASK) >> 1;
+bool nRF24L01::readReceivedData(nRF24L01Message *message) {
+    message->pipeNumber = pipeNumberReceived();
     clearReceiveInterrupt();
-    if (message->pipeNumber == 7) { // 111 => all empty pipes
+    if (message->pipeNumber < 0) {
         message->length = 0;
-        return;
+        return false;
     }
 
     readRegister(R_RX_PL_WID, &message->length, 1);
 
-    if (message->length == 0) return;
-    sendCommand(R_RX_PAYLOAD, &message->data, message->length);
+    if (message->length > 0)
+        sendCommand(R_RX_PAYLOAD, &message->data, message->length);
+
+    return true;
+}
+
+int nRF24L01::pipeNumberReceived() {
+    int pipeNumber = (status & RX_P_NO_MASK) >> 1;
+    return pipeNumber <= 5 ? pipeNumber : -1;
 }
 
 void nRF24L01::transmit(void *address, nRF24L01Message *msg) {
@@ -145,6 +150,19 @@ int nRF24L01::transmitSuccess() {
     config |= _BV(PRIM_RX);
     writeRegister(CONFIG, &config, 1);
     return success;
+}
+
+void nRF24L01::flushTransmitMessage() {
+    sendCommand(FLUSH_TX, NULL, 0);
+}
+
+void nRF24L01::retryTransmit() {
+    // XXX not sure it works this way, never tested
+    uint8_t config;
+    readRegister(CONFIG, &config, 1);
+    config &= ~_BV(PRIM_RX);
+    writeRegister(CONFIG, &config, 1);
+    digitalWrite(chipEnabledPin, HIGH);
 }
 
 void nRF24L01::clearInterrupts() {
