@@ -1,7 +1,9 @@
 Arduino-nRF24L01+
 =================
 
-This is a library for using the nRF24L01+ with Arduino.
+A library for using the nRF24L01+ with Arduino.
+
+You can find the C version for AVR chips here: <https://github.com/antoineleclair/avr-nrf24l01>.
 
 Connections
 -----------
